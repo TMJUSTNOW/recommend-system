@@ -6,7 +6,7 @@ Set the intermediate data for recommend system.
 """
 
 import pymysql
-import json
+from surprise import Dataset
 
 class GetData:
     """
@@ -16,7 +16,7 @@ class GetData:
         self.host=host
         self.database=database
         self.charset=charset
-        self.result=0;
+        self.result=0
 
     def connect(self,user,password):
         self.connection = pymysql.connect(host=self.host,
