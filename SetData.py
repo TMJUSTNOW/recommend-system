@@ -35,24 +35,24 @@ class GetData:
                 cursor.execute(sql)
                 self.result = cursor.fetchall()
                 return self.result
-        except:
-            print('select err!')
+        except Exception as e:
+            print('select err! as ', e)
 
     def insert(self, sql):
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(sql)
             self.connection.commit()
-        except:
-            print('insert err!')
+        except Exception as e:
+            print('insert err! as ', e)
 
     def excute(self, sql):
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(sql)
             self.connection.commit()
-        except:
-            print('excute err!')
+        except Exception as e:
+            print('excute err! as ',e)
 
     def show_result(self):
         print(self.result)
@@ -72,6 +72,7 @@ class Caculate:
         self.my_connect.connect(user, password)
 
     def create_temporary_tables(self, table, item):
+        table=table+'_tem'
         tep = ' INT, '
         items = tep.join(item) + ' INT'
         self.item = item
@@ -85,6 +86,7 @@ class Caculate:
         self.my_connect.excute(sql)
 
     def insert_trend(self, table):
+        table = table + '_tem'
         if table == 'students_tutors_tem':
             self.table = 'students_tutors_tem'
             tables = ('student_call_logs', 'fans', 'appointments')
@@ -142,15 +144,35 @@ class Caculate:
             self.my_connect.insert(sql)
 
 
+    def replace_table(self, table):
+        tem_table = table+'_tem'
+        old_table = table+'_old'
+        sql = "SHOW TABLES LIKE '{}';".format(old_table)
+        if self.my_connect.select(sql):
+            sql = "DROP TABLE {};".format(old_table)
+            self.my_connect.excute(sql)
+
+        sql = "SHOW TABLES LIKE '{}';".format(table)
+        if self.my_connect.select(sql):
+            sql = "RENAME TABLE {} TO {};".format(table, old_table)
+            self.my_connect.excute(sql)
+
+        sql = "RENAME TABLE {} TO {};".format(tem_table, table)
+        self.my_connect.excute(sql)
+        sql = "DROP TABLE {};".format(old_table)
+        self.my_connect.excute(sql)
+
+
 
 if __name__ == '__main__':
     Set = Caculate('localhost', 'tictalk_db', 'utf8mb4')
     Set.connect('py', '2151609')
-    tables = ('students_tutors_tem', 'students_courses_tem')
+    tables = ('students_tutors', 'students_courses')
     items = (('student_id', 'tutor_id', 'trend', 'created'), ('student_id', 'course_id', 'trend', 'created'))
     for table, item in zip(tables, items):
         Set.create_temporary_tables(table, item)
         Set.insert_trend(table)
+        Set.replace_table(table)
 
 
 
