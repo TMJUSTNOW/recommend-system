@@ -89,14 +89,14 @@ class Caculate:
             self.table = 'students_tutors_tem'
             tables = ('student_call_logs', 'fans', 'appointments')
             keys = (('student_id','tutor_id','duration','cost','rate'), ('student_id','tutor_id'), ('student_id','tutor_id'))
-            weights = ((0, 0, 0.01, 0.02, 1, 1), (0, 0, 10), (0, 0, 10))
+            weights = ((0, 0, 0.01, 0.02, 1, 1), (0, 0, 5), (0, 0, 10))
             for table, key, weight in zip(tables, keys, weights):
                 self.insert_table(table, key, weight)
         elif table == 'students_courses_tem':
             self.table = 'students_courses_tem'
             tables = ('student_course_histories', 'course_comments')
             keys = (('student_id', 'course_id'), ('student_id', 'course_id'))
-            weights = ((0, 0, 10), (0, 0, 10))
+            weights = ((0, 0, 5), (0, 0, 10))
             for table, key, weight in zip(tables, keys, weights):
                 self.insert_table(table, key, weight)
         else:

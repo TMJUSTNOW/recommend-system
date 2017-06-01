@@ -36,6 +36,7 @@ class DatasetUserDatabases(Dataset):
         my_connect.connect(user, password)
         my_connect.select("SELECT * FROM {}".format(table))
         self.result=my_connect.result
+#        print(self.result)
 
     def build_data(self, key):
 #        print(self.result)
@@ -45,8 +46,10 @@ class DatasetUserDatabases(Dataset):
     @staticmethod
     def parse_line(line, key):
         keys=key.split(', ')
+#        print(keys)
         ParseLine = (line.get(id) for id in keys)
-        print(ParseLine)
+#        for id in keys:
+#            print(line.get(id))
 
 
 #        user_id=line.get('user_id')
@@ -58,6 +61,7 @@ class DatasetUserDatabases(Dataset):
 #        item_id=line.get('courses_id')
 #        rating=line.get('trend')
 #        timestamp=line.get('created')
+#        print(rating)
 
         return ParseLine
 
@@ -148,8 +152,12 @@ if __name__ == '__main__':
 #    reader = Reader(line_format='user item rating timestamp', sep='\t')
     reader = Reader(line_format='user item rating timestamp', sep='\t')
     data = DatasetUserDatabases('localhost','tictalk_db','utf8mb4',reader)
-    data.get_data('py','2151609','students_tutors_tem')
-    data.build_data('student_id, courses_id, trend, created')
+
+    data.get_data('py', '2151609', 'students_tutors_tem')
+    data.build_data('student_id, tutor_id, trend, created')
+
+#    data.get_data('py','2151609','students_courses_tem')
+#    data.build_data('student_id, course_id, trend, created')
 
 #    data=DatasetUserDatabases('localhost','test','utf8mb4',reader)
 #    data.get_data('py','2151609','u_data')
@@ -157,19 +165,22 @@ if __name__ == '__main__':
     data.split(n_folds=5)
 
     trainset = data.build_full_trainset()
+#    print(trainset)
     algo = SVD()
     algo.train(trainset)
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
     testset = trainset.build_anti_testset()
+#    print(testset)
     predictions = algo.test(testset)
+#    print(predictions)
 
     top_n = get_top_n(predictions, n=10)
 
     # Print the recommended items for each user
     for uid, user_ratings in top_n.items():
         print(uid, [iid for (iid, _) in user_ratings])
-        print('ok')
+#        print('ok')
 
     print('yes')
 
