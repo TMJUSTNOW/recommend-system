@@ -31,25 +31,35 @@ class DatasetUserDatabases(Dataset):
         self.result = None
         self.raw_ratings = None
 
-    def get_data(self,user,password):
+    def get_data(self,user, password, table):
         my_connect = SetData.GetData(self.host, self.database, self.charset)
         my_connect.connect(user, password)
-        my_connect.select("SELECT * FROM u_data")
+        my_connect.select("SELECT * FROM {}".format(table))
         self.result=my_connect.result
 
-    def build_data(self):
+    def build_data(self, key):
 #        print(self.result)
-        self.raw_ratings=[self.parse_line(line) for line in self.result]
+        self.raw_ratings=[self.parse_line(line, key) for line in self.result]
 #        print(self.raw_ratings)
 
     @staticmethod
-    def parse_line(line):
-        user_id=line.get('user_id')
-        item_id=line.get('item_id')
-        rating=line.get('rating')
-        timestamp=line.get('timestamp')
+    def parse_line(line, key):
+        keys=key.split(', ')
+        ParseLine = (line.get(id) for id in keys)
+        print(ParseLine)
 
-        return user_id, item_id, rating, timestamp
+
+#        user_id=line.get('user_id')
+#        item_id=line.get('item_id')
+#        rating=line.get('rating')
+#        timestamp=line.get('timestamp')
+
+#        user_id=line.get('student_id')
+#        item_id=line.get('courses_id')
+#        rating=line.get('trend')
+#        timestamp=line.get('created')
+
+        return ParseLine
 
     def build_full_trainset(self):
         """Do not split the dataset into folds and just return a trainset as
@@ -135,10 +145,15 @@ def get_top_n(predictions, n=10):
     return top_n
 
 if __name__ == '__main__':
+#    reader = Reader(line_format='user item rating timestamp', sep='\t')
     reader = Reader(line_format='user item rating timestamp', sep='\t')
-    data=DatasetUserDatabases('localhost','test','utf8mb4',reader)
-    data.get_data('py','2151609')
-    data.build_data()
+    data = DatasetUserDatabases('localhost','tictalk_db','utf8mb4',reader)
+    data.get_data('py','2151609','students_tutors_tem')
+    data.build_data('student_id, courses_id, trend, created')
+
+#    data=DatasetUserDatabases('localhost','test','utf8mb4',reader)
+#    data.get_data('py','2151609','u_data')
+#    data.build_data('user_id, item_id, rating, timestamp')
     data.split(n_folds=5)
 
     trainset = data.build_full_trainset()
@@ -154,5 +169,8 @@ if __name__ == '__main__':
     # Print the recommended items for each user
     for uid, user_ratings in top_n.items():
         print(uid, [iid for (iid, _) in user_ratings])
+        print('ok')
+
+    print('yes')
 
 
