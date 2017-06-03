@@ -9,7 +9,11 @@ import pymysql
 import SetData
 import random
 from surprise import SVD
+from surprise import SVDpp
+from surprise import KNNBasic
+from surprise import SlopeOne
 from surprise import Dataset
+
 from surprise import evaluate, print_perf
 import os
 from surprise import Reader
@@ -153,7 +157,7 @@ if __name__ == '__main__':
     reader = Reader(line_format='user item rating timestamp', sep='\t')
     data = DatasetUserDatabases('localhost','tictalk_db','utf8mb4',reader)
 
-    data.get_data('py', '2151609', 'students_tutors_tem')
+    data.get_data('py', '2151609', 'students_tutors')
     data.build_data('student_id, tutor_id, trend, created')
 
 #    data.get_data('py','2151609','students_courses_tem')
@@ -166,14 +170,24 @@ if __name__ == '__main__':
 
     trainset = data.build_full_trainset()
 #    print(trainset)
-    algo = SVD()
+#    algo = SVD()
+    algo = SVDpp()
+#    algo = KNNBasic()
+#    algo = SlopeOne()
     algo.train(trainset)
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
     testset = trainset.build_anti_testset()
 #    print(testset)
     predictions = algo.test(testset)
+
 #    print(predictions)
+    f=open('demo.txt','w')
+    for i in predictions:
+        k=str(i)
+        f.write(k+"\n")
+    f.close()
+
 
     top_n = get_top_n(predictions, n=10)
 
