@@ -87,3 +87,5 @@ ENV/
 
 # Rope project settings
 .ropeproject
+.idea/
+将删除 .idea/
