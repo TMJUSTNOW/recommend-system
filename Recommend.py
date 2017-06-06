@@ -8,6 +8,7 @@ The main operate of recommend system.
 import pymysql
 import SetData
 import random
+import time
 from surprise import SVD
 from surprise import SVDpp
 from surprise import KNNBasic
@@ -34,12 +35,13 @@ class DatasetUserDatabases(Dataset):
         self.shuffle = True
         self.result = None
         self.raw_ratings = None
+        self.my_connect = None
 
     def get_data(self,user, password, table):
-        my_connect = SetData.GetData(self.host, self.database, self.charset)
-        my_connect.connect(user, password)
-        my_connect.select("SELECT * FROM {}".format(table))
-        self.result=my_connect.result
+        self.my_connect = SetData.GetData(self.host, self.database, self.charset)
+        self.my_connect.connect(user, password)
+        self.my_connect.select("SELECT * FROM {}".format(table))
+        self.result=self.my_connect.result
 #        print(self.result)
 
     def build_data(self, key):
@@ -152,50 +154,77 @@ def get_top_n(predictions, n=10):
 
     return top_n
 
+def save_top_data(top_n, connect, table):
+
+    '''
+    save the recommend result in mySQL database.
+    :param top_n: The top n recommend result for every user.
+    :param connect: The connect to database.
+    :param table: The table which get the recommend from.
+    :return: None
+    '''
+
+    table_id = table['id'] + '_recommend_result'
+    items = table['item'].split(', ')
+    create_item = items[0] + ' INT, ' + items[1] + ' VARCHAR(100), ' + items[3]+' INT'
+
+    sql = "SHOW TABLES LIKE '{}';".format(table_id)
+    if connect.select(sql):
+        sql = "DROP TABLE {}".format(table_id)
+        connect.excute(sql)
+
+    sql = "CREATE TABLE {} ({});".format(table_id, create_item)
+    connect.excute(sql)
+    for uid, user_ratings in top_n.items():
+        result = str([iid for (iid, _) in user_ratings])
+        sql = "INSERT INTO {} SET {} = {}, {} = \'{}\', {} = {};".format(table_id, items[0], uid, items[1], result, items[3], time.time())
+        connect.insert(sql)
+
+
 if __name__ == '__main__':
-#    reader = Reader(line_format='user item rating timestamp', sep='\t')
     reader = Reader(line_format='user item rating timestamp', sep='\t')
-    data = DatasetUserDatabases('localhost','tictalk_db','utf8mb4',reader)
+    database = {'host':'localhost', 'id':'tictalk_db', 'codetype':'utf8mb4'}
+    user = {'id':'py', 'password':'2151609'}
+    table = {'id':'students_tutors', 'item':'student_id, tutor_id, trend, created'}
+#    table = {'id': 'students_courses', 'item': 'student_id, course_id, trend, created'}
+#    database = {'host': 'localhost', 'id': 'test', 'codetype': 'utf8mb4'}
+#    table = {'id': 'u_data', 'item': 'user_id, item_id, rating, timestamp'}
 
-    data.get_data('py', '2151609', 'students_tutors')
-    data.build_data('student_id, tutor_id, trend, created')
+    data = DatasetUserDatabases(database['host'],database['id'],database['codetype'],reader)
+    data.get_data(user['id'], user['password'], table['id'])
+    data.build_data(table['item'])
 
-#    data.get_data('py','2151609','students_courses_tem')
-#    data.build_data('student_id, course_id, trend, created')
-
-#    data=DatasetUserDatabases('localhost','test','utf8mb4',reader)
-#    data.get_data('py','2151609','u_data')
-#    data.build_data('user_id, item_id, rating, timestamp')
     data.split(n_folds=5)
 
     trainset = data.build_full_trainset()
-#    print(trainset)
+
+    # Some different algorithms to select
 #    algo = SVD()
     algo = SVDpp()
 #    algo = KNNBasic()
 #    algo = SlopeOne()
+
+
     algo.train(trainset)
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
     testset = trainset.build_anti_testset()
-#    print(testset)
+
+    # Get the estimate result
     predictions = algo.test(testset)
 
-#    print(predictions)
-    f=open('demo.txt','w')
-    for i in predictions:
-        k=str(i)
-        f.write(k+"\n")
-    f.close()
 
+    # Write the predictions in file
+#    f=open('predictions.txt','w')
+#    for i in predictions:
+#        k=str(i)
+#        f.write(k+"\n")
+#    f.close()
 
+    # Get the top n recommend
     top_n = get_top_n(predictions, n=10)
 
-    # Print the recommended items for each user
-    for uid, user_ratings in top_n.items():
-        print(uid, [iid for (iid, _) in user_ratings])
-#        print('ok')
-
-    print('yes')
+    # Save the result in database
+    save_top_data(top_n, data.my_connect, table)
 
 
