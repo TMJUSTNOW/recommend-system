@@ -5,7 +5,6 @@
 The main operate of recommend system.
 """
 
-import pymysql
 import SetData
 import random
 import time
@@ -15,8 +14,6 @@ from surprise import KNNBasic
 from surprise import SlopeOne
 from surprise import Dataset
 
-from surprise import evaluate, print_perf
-import os
 from surprise import Reader
 from collections import defaultdict
 
@@ -38,36 +35,34 @@ class DatasetUserDatabases(Dataset):
         self.my_connect = None
 
     def get_data(self,user, password, table):
+        """
+        Get the u-i rate matrix from database
+        :param user: user id
+        :param password: user password
+        :param table: the table id
+        :return:
+        """
         self.my_connect = SetData.GetData(self.host, self.database, self.charset)
         self.my_connect.connect(user, password)
         self.my_connect.select("SELECT * FROM {}".format(table))
         self.result=self.my_connect.result
-#        print(self.result)
+
 
     def build_data(self, key):
-#        print(self.result)
+
         self.raw_ratings=[self.parse_line(line, key) for line in self.result]
-#        print(self.raw_ratings)
+
 
     @staticmethod
     def parse_line(line, key):
+        """
+        Parse the data and return them in requested format
+        :param line: A line of data from the database
+        :param key: The useful key for the data
+        :return: format data
+        """
         keys=key.split(', ')
-#        print(keys)
         ParseLine = (line.get(id) for id in keys)
-#        for id in keys:
-#            print(line.get(id))
-
-
-#        user_id=line.get('user_id')
-#        item_id=line.get('item_id')
-#        rating=line.get('rating')
-#        timestamp=line.get('timestamp')
-
-#        user_id=line.get('student_id')
-#        item_id=line.get('courses_id')
-#        rating=line.get('trend')
-#        timestamp=line.get('created')
-#        print(rating)
 
         return ParseLine
 
@@ -156,13 +151,13 @@ def get_top_n(predictions, n=10):
 
 def save_top_data(top_n, connect, table):
 
-    '''
+    """
     save the recommend result in mySQL database.
     :param top_n: The top n recommend result for every user.
     :param connect: The connect to database.
     :param table: The table which get the recommend from.
     :return: None
-    '''
+    """
 
     table_id = table['id'] + '_recommend_result'
     items = table['item'].split(', ')
@@ -182,25 +177,25 @@ def save_top_data(top_n, connect, table):
 
 
 if __name__ == '__main__':
+    # Set the useful parameter
     reader = Reader(line_format='user item rating timestamp', sep='\t')
     database = {'host':'localhost', 'id':'tictalk_db', 'codetype':'utf8mb4'}
     user = {'id':'py', 'password':'2151609'}
     table = {'id':'students_tutors', 'item':'student_id, tutor_id, trend, created'}
 #    table = {'id': 'students_courses', 'item': 'student_id, course_id, trend, created'}
-#    database = {'host': 'localhost', 'id': 'test', 'codetype': 'utf8mb4'}
-#    table = {'id': 'u_data', 'item': 'user_id, item_id, rating, timestamp'}
 
+    # Get the u-i rate matrix from database
     data = DatasetUserDatabases(database['host'],database['id'],database['codetype'],reader)
     data.get_data(user['id'], user['password'], table['id'])
     data.build_data(table['item'])
 
+    # build the data for the next operation
     data.split(n_folds=5)
-
     trainset = data.build_full_trainset()
 
     # Some different algorithms to select
-#    algo = SVD()
     algo = SVDpp()
+#    algo = SVD()
 #    algo = KNNBasic()
 #    algo = SlopeOne()
 
