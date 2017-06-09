@@ -11,6 +11,7 @@ import time
 from surprise import SVD
 from surprise import SVDpp
 from surprise import KNNBasic
+from surprise import KNNBaseline
 from surprise import SlopeOne
 from surprise import Dataset
 
@@ -123,6 +124,19 @@ class DatasetUserDatabases(Dataset):
         self.n_folds = n_folds
         self.shuffle = shuffle
 
+
+class KNNBaselineWithTag(KNNBaseline):
+    """
+    Rewrite the classical KNNBaseline algorithm to input the tag information
+    """
+
+    def GetTagInformation(self, connect, table):
+        pass
+
+    def AddTagInformation(self, tagsim):
+        pass
+
+
 def get_top_n(predictions, n=10):
     '''Return the top-N recommendation for each user from a set of predictions.
 
@@ -199,7 +213,6 @@ if __name__ == '__main__':
 #    algo = KNNBasic()
 #    algo = SlopeOne()
 
-
     algo.train(trainset)
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
@@ -207,14 +220,6 @@ if __name__ == '__main__':
 
     # Get the estimate result
     predictions = algo.test(testset)
-
-
-    # Write the predictions in file
-#    f=open('predictions.txt','w')
-#    for i in predictions:
-#        k=str(i)
-#        f.write(k+"\n")
-#    f.close()
 
     # Get the top n recommend
     top_n = get_top_n(predictions, n=10)
