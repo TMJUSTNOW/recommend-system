@@ -23,9 +23,9 @@ class DatasetUserDatabases(Dataset):
     """
     Get the data from mySQL.
     """
-    def __init__(self,host,database,charset,reader=None):
+    def __init__(self, host, database, charset, reader=None):
 
-        Dataset.__init__(self,reader)
+        Dataset.__init__(self, reader)
         self.host = host
         self.database = database
         self.charset = charset
@@ -35,7 +35,7 @@ class DatasetUserDatabases(Dataset):
         self.raw_ratings = None
         self.my_connect = None
 
-    def get_data(self,user, password, table):
+    def get_data(self, user, password, table):
         """
         Get the u-i rate matrix from database
         :param user: user id
@@ -46,13 +46,11 @@ class DatasetUserDatabases(Dataset):
         self.my_connect = SetData.GetData(self.host, self.database, self.charset)
         self.my_connect.connect(user, password)
         self.my_connect.select("SELECT * FROM {}".format(table))
-        self.result=self.my_connect.result
-
+        self.result = self.my_connect.result
 
     def build_data(self, key):
 
         self.raw_ratings=[self.parse_line(line, key) for line in self.result]
-
 
     @staticmethod
     def parse_line(line, key):
@@ -62,7 +60,7 @@ class DatasetUserDatabases(Dataset):
         :param key: The useful key for the data
         :return: format data
         """
-        keys=key.split(', ')
+        keys = key.split(', ')
         ParseLine = (line.get(id) for id in keys)
 
         return ParseLine
@@ -125,20 +123,9 @@ class DatasetUserDatabases(Dataset):
         self.shuffle = shuffle
 
 
-class KNNBaselineWithTag(KNNBaseline):
-    """
-    Rewrite the classical KNNBaseline algorithm to input the tag information
-    """
-
-    def GetTagInformation(self, connect, table):
-        pass
-
-    def AddTagInformation(self, tagsim):
-        pass
-
-
 def get_top_n(predictions, n=10):
-    '''Return the top-N recommendation for each user from a set of predictions.
+    """
+    Return the top-N recommendation for each user from a set of predictions.
 
     Args:
         predictions(list of Prediction objects): The list of predictions, as
@@ -149,7 +136,7 @@ def get_top_n(predictions, n=10):
     Returns:
     A dict where keys are user (raw) ids and values are lists of tuples:
         [(raw item id, rating estimation), ...] of size n.
-    '''
+    """
 
     # First map the predictions to each user.
     top_n = defaultdict(list)
@@ -196,7 +183,6 @@ if __name__ == '__main__':
     database = {'host':'localhost', 'id':'tictalk_db', 'codetype':'utf8mb4'}
     user = {'id':'py', 'password':'2151609'}
     table = {'id':'students_tutors', 'item':'student_id, tutor_id, trend, created'}
-#    table = {'id': 'students_courses', 'item': 'student_id, course_id, trend, created'}
 
     # Get the u-i rate matrix from database
     data = DatasetUserDatabases(database['host'],database['id'],database['codetype'],reader)
