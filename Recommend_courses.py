@@ -5,6 +5,8 @@
 The main operate of recommend system for course use KNNBaselineWithTag.
 """
 
+import numpy as np
+
 from surprise import KNNBaseline
 from surprise import Reader
 
@@ -18,11 +20,35 @@ class KNNBaselineWithTag(KNNBaseline):
     Rewrite the classical KNNBaseline algorithm to input the tag information
     """
 
-    def GetTagInformation(self, connect, table):
-        pass
+    def get_tag_information(self, connect, table):
+        keys = ('tutor_id', 'category_id')
+        sep = ', '
+        key_all = sep.join(keys)
+        sql = 'SELECT COUNT(*) FROM {}'.format(table)
+        course_number = connect.select(sql)[0]['COUNT(*)']
+#        print(course_number)
+        sim_tag = np.zeros((course_number, course_number), np.double)
+        sql = 'SELECT id, {}  FROM {}'.format(key_all, table)
+        courses = connect.select(sql)
+        course_dict = {}
+        id_list = []
+        for course in courses:
+            id = course.pop('id')
+            id_list.append(id)
+            course_dict[id] = course
+#        print(course_dict)
+        step = 0.4
+        for xi in range(course_number):
+            sim_tag[xi, xi] = 1
+            for xj in range(xi + 1, course_number):
+                for key in keys:
+                    if course_dict[id_list[xi]][key] == course_dict[id_list[xj]][key]:
+                        sim_tag[xi, xj] = sim_tag[xi, xj] + step
+                sim_tag[xj, xi] = sim_tag[xi, xj]
+        return sim_tag
 
-    def AddTagInformation(self, tagsim):
-        pass
+    def add_tag_information(self, tagsim):
+        print(type(self.sim))
 
 
 if __name__ == '__main__':
@@ -45,6 +71,11 @@ if __name__ == '__main__':
     algo = KNNBaselineWithTag()
 
     algo.train(trainset)
+
+    sim_tag = algo.get_tag_information(data.my_connect, 'courses')
+    print(sim_tag)
+
+    algo.add_tag_information(0)
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
     testset = trainset.build_anti_testset()
