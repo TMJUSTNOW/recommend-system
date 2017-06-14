@@ -54,6 +54,9 @@ class GetData:
         except Exception as e:
             print('excute err! as ',e)
 
+    def close(self):
+        self.connection.close()
+
     def show_result(self):
         print(self.result)
 
@@ -181,10 +184,9 @@ class Caculate:
             sql = "INSERT INTO {} SET {} = {}, {} = {}, {} = {}, {} = {};".format(self.table, keys[0], self.result[0], keys[1], self.result[1], self.item[3], trend, self.item[2], time.time())
             self.my_connect.insert(sql)
 
-
     def replace_table(self, table):
         """
-        Repalce the old u-i matrix table of the a temporary table
+        Replace the old u-i matrix table of the a temporary table
         :param table: table id
         :return:
         """
@@ -240,4 +242,6 @@ if __name__ == '__main__':
 
     # Modify data for Hybrid Recommendation
     Set.insert_zeros('courses', tables[1], items[1])
+
+    Set.my_connect.close()
 

@@ -27,7 +27,7 @@ class KNNBaselineWithTag(KNNBaseline):
         sql = 'SELECT COUNT(*) FROM {}'.format(table)
         course_number = connect.select(sql)[0]['COUNT(*)']
 #        print(course_number)
-        sim_tag = np.zeros((course_number, course_number), np.double)
+        self.sim_tag = np.zeros((course_number, course_number), np.double)
         sql = 'SELECT id, {}  FROM {}'.format(key_all, table)
         courses = connect.select(sql)
         course_dict = {}
@@ -39,16 +39,30 @@ class KNNBaselineWithTag(KNNBaseline):
 #        print(course_dict)
         step = 0.4
         for xi in range(course_number):
-            sim_tag[xi, xi] = 1
+            self.sim_tag[xi, xi] = 1
             for xj in range(xi + 1, course_number):
                 for key in keys:
                     if course_dict[id_list[xi]][key] == course_dict[id_list[xj]][key]:
-                        sim_tag[xi, xj] = sim_tag[xi, xj] + step
-                sim_tag[xj, xi] = sim_tag[xi, xj]
-        return sim_tag
+                        self.sim_tag[xi, xj] = self.sim_tag[xi, xj] + step
+                self.sim_tag[xj, xi] = self.sim_tag[xi, xj]
 
-    def add_tag_information(self, tagsim):
-        print(type(self.sim))
+    def add_tag_information(self):
+        shape_ui = self.sim.shape
+        shape_is = self.sim_tag.shape
+        sim_fix = np.zeros((shape_is[0], shape_is[1]), np.double)
+        if shape_ui == shape_is:
+            for xi in range(shape_is[0]):
+                sim_fix[xi, xi] = 1
+                for xj in range(xi + 1, shape_is[0]):
+                    sim_fix[xi, xj] = min(self.sim[xi, xj] + self.sim_tag[xi, xj], 1)
+                    sim_fix[xj, xi] = sim_fix[xi, xj]
+        else:
+            print('Error! The shape of similarity matrix is not same!')
+            sim_fix = self.sim_tag
+        self.sim = sim_fix
+#        print(self.sim_tag)
+#        print(self.sim)
+#        print(sim_fix)
 
 
 if __name__ == '__main__':
@@ -68,17 +82,18 @@ if __name__ == '__main__':
     trainset = data.build_full_trainset()
 
     # Special design prediction algorithm
-    algo = KNNBaselineWithTag()
+    sim_options = {'name': 'pearson_baseline', 'user_based': False}
+    algo = KNNBaselineWithTag(sim_options=sim_options)
 
     algo.train(trainset)
 
-    sim_tag = algo.get_tag_information(data.my_connect, 'courses')
-    print(sim_tag)
+    algo.get_tag_information(data.my_connect, 'courses')
 
-    algo.add_tag_information(0)
+    algo.add_tag_information()
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
     testset = trainset.build_anti_testset()
+#    print(testset)
 
     # Get the estimate result
     predictions = algo.test(testset)
@@ -88,3 +103,5 @@ if __name__ == '__main__':
 
     # Save the result in database
     save_top_data(top_n, data.my_connect, table)
+
+    data.my_connect.close()
