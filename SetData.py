@@ -205,6 +205,18 @@ class Caculate:
         sql = "DROP TABLE {};".format(old_table)
         self.my_connect.excute(sql)
 
+    def insert_zeros(self, table, ui_table, keys):
+        key = 'id'
+        sql = 'SELECT id, {}  FROM {}'.format(key, table)
+        courses = self.my_connect.select(sql)
+        user_id = 0
+        for course in courses:
+            course_id = course['id']
+            sql = "INSERT INTO {} SET {} = {}, {} = {}, {} = {}, {} = {};".format(ui_table, keys[0], user_id,
+                                                                            keys[1], course_id, keys[3],
+                                                                            0, keys[2], time.time())
+            self.my_connect.insert(sql)
+
 
 
 if __name__ == '__main__':
@@ -226,4 +238,6 @@ if __name__ == '__main__':
         Set.replace_table(table)
 
 
+    # Modify data for Hybrid Recommendation
+    Set.insert_zeros('courses', tables[1], items[1])
 
