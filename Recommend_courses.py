@@ -37,13 +37,13 @@ class KNNBaselineWithTag(KNNBaseline):
             id_list.append(id)
             course_dict[id] = course
 #        print(course_dict)
-        step = 0.4
+        step = {'tutor_id':0.5, 'category_id':0.4}
         for xi in range(course_number):
             self.sim_tag[xi, xi] = 1
             for xj in range(xi + 1, course_number):
                 for key in keys:
                     if course_dict[id_list[xi]][key] == course_dict[id_list[xj]][key]:
-                        self.sim_tag[xi, xj] = self.sim_tag[xi, xj] + step
+                        self.sim_tag[xi, xj] = self.sim_tag[xi, xj] + step[key]
                 self.sim_tag[xj, xi] = self.sim_tag[xi, xj]
 
     def add_tag_information(self):
@@ -59,7 +59,10 @@ class KNNBaselineWithTag(KNNBaseline):
         else:
             print('Error! The shape of similarity matrix is not same!')
             sim_fix = self.sim_tag
+#        print(self.sim)
         self.sim = sim_fix
+#        print(self.sim)
+#        self.sim = np.zeros((shape_is[0], shape_is[1]), np.double)
 #        print(self.sim_tag)
 #        print(self.sim)
 #        print(sim_fix)
@@ -83,13 +86,16 @@ if __name__ == '__main__':
 
     # Special design prediction algorithm
     sim_options = {'name': 'pearson_baseline', 'user_based': False}
+#    sim_options = {'name': 'cosine', 'user_based': False}
     algo = KNNBaselineWithTag(sim_options=sim_options)
 
     algo.train(trainset)
+#    print(algo.sim)
 
     algo.get_tag_information(data.my_connect, 'courses')
 
     algo.add_tag_information()
+#    print(algo.sim)
 
     # Than predict ratings for all pairs (u, i) that are NOT in the training set.
     testset = trainset.build_anti_testset()
