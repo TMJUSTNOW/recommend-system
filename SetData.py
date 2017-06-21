@@ -120,9 +120,9 @@ class Caculate:
                 self.insert_table(table, key, weight)
         elif table == 'students_courses_tem':
             self.table = 'students_courses_tem'
-            tables = ('student_course_histories', 'course_comments')
-            keys = (('student_id', 'course_id'), ('student_id', 'course_id'))
-            weights = ((0, 0, 1), (0, 0, 2))
+            tables = ('student_course_histories', 'course_comments', 'student_bills')
+            keys = (('student_id', 'course_id'), ('student_id', 'course_id'), ('student_id', 'course_id', 'amount'))
+            weights = ((0, 0, 2), (0, 0, 3), (0, 0, 0.02, 1))
             for table, key, weight in zip(tables, keys, weights):
                 self.insert_table(table, key, weight)
         else:
@@ -148,6 +148,8 @@ class Caculate:
         for line in dict_result:
             self.result = [line.get(key) for key in keys]
 #            print(self.result)
+            if self.result[0] == 0 or self.result[1] == 0:
+                continue
             self.insert_data(keys, weight)
 
     def insert_data(self, keys, weight):
