@@ -54,6 +54,9 @@ class GetData:
         except Exception as e:
             print('excute err! as ',e)
 
+    def close(self):
+        self.connection.close()
+
     def show_result(self):
         print(self.result)
 
@@ -117,9 +120,9 @@ class Caculate:
                 self.insert_table(table, key, weight)
         elif table == 'students_courses_tem':
             self.table = 'students_courses_tem'
-            tables = ('student_course_histories', 'course_comments')
-            keys = (('student_id', 'course_id'), ('student_id', 'course_id'))
-            weights = ((0, 0, 1), (0, 0, 2))
+            tables = ('student_course_histories', 'course_comments', 'student_bills')
+            keys = (('student_id', 'course_id'), ('student_id', 'course_id'), ('student_id', 'course_id', 'amount'))
+            weights = ((0, 0, 2), (0, 0, 3), (0, 0, 0.02, 1))
             for table, key, weight in zip(tables, keys, weights):
                 self.insert_table(table, key, weight)
         else:
@@ -145,6 +148,8 @@ class Caculate:
         for line in dict_result:
             self.result = [line.get(key) for key in keys]
 #            print(self.result)
+            if self.result[0] == 0 or self.result[1] == 0:
+                continue
             self.insert_data(keys, weight)
 
     def insert_data(self, keys, weight):
@@ -181,10 +186,9 @@ class Caculate:
             sql = "INSERT INTO {} SET {} = {}, {} = {}, {} = {}, {} = {};".format(self.table, keys[0], self.result[0], keys[1], self.result[1], self.item[3], trend, self.item[2], time.time())
             self.my_connect.insert(sql)
 
-
     def replace_table(self, table):
         """
-        Repalce the old u-i matrix table of the a temporary table
+        Replace the old u-i matrix table of the a temporary table
         :param table: table id
         :return:
         """
@@ -204,6 +208,18 @@ class Caculate:
         self.my_connect.excute(sql)
         sql = "DROP TABLE {};".format(old_table)
         self.my_connect.excute(sql)
+
+    def insert_zeros(self, table, ui_table, keys):
+        key = 'id'
+        sql = 'SELECT id, {}  FROM {}'.format(key, table)
+        courses = self.my_connect.select(sql)
+        user_id = 0
+        for course in courses:
+            course_id = course['id']
+            sql = "INSERT INTO {} SET {} = {}, {} = {}, {} = {}, {} = {};".format(ui_table, keys[0], user_id,
+                                                                            keys[1], course_id, keys[3],
+                                                                            0, keys[2], time.time())
+            self.my_connect.insert(sql)
 
 
 
@@ -226,4 +242,8 @@ if __name__ == '__main__':
         Set.replace_table(table)
 
 
+    # Modify data for Hybrid Recommendation
+    Set.insert_zeros('courses', tables[1], items[1])
+
+    Set.my_connect.close()
 
