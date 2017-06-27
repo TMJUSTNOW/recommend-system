@@ -1,5 +1,4 @@
 # recommend-system
-recommend-system
 
 
 # 使用方法：
@@ -9,6 +8,4 @@ step 1：
 运行SetData.py, 根据当前数据库生成推荐时要用的u-i矩阵，并储存在表students_courses和表students_tutors中。
 
 step 2：
-分别运行Recommend_courses.py和Recommend_tutors.py, 分别针对每个用户个性化推荐课程和老师，并将结果分别存储在
-
-students_courses_recommend_result表和students_tutors_recommend_result表中。
+分别运行Recommend_courses.py和Recommend_tutors.py, 分别针对每个用户个性化推荐课程和老师，并将结果分别存储在students_courses_recommend_result表和students_tutors_recommend_result表中。
