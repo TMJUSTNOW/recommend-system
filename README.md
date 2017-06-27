@@ -2,6 +2,12 @@
 基于协同过滤和基于内容混合的推荐算法
 
 # 使用方法：
+
+需要的包：
+    $ pip install numpy
+    $ pip install scikit-surprise
+    $ pip install pymysql
+
 只要数据库名和各表名没有改动，只要将三个文件中main函数中定义的字典user的值改成当前数据库的用户名和密码即可。
 
 step 1：
